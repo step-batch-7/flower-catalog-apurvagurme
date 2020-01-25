@@ -24,11 +24,8 @@ const getRequest = function(text) {
 
 const generateResponse = function(req) {
   let res = '';
-
   if (req.method == 'GET' && req.url == '/') res = getResponse('html', homePage);
-
-  if (req.method === 'GET') res = serveStaticFile(req);
-
+  // if (req.method === 'GET') res = serveStaticFile(req);
   return res;
 };
 
