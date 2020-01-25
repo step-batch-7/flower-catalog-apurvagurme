@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="./styles/index.css" />
+    <title>Flower Catalog</title>
+  </head>
+  <body>
+    <div id="title">
+      <h3>Flower Catalog</h3>
+    </div>
+    <hr />
+    <div style="display: flex;flex: auto;">
+      <img style="width: auto;height: 700px;" src="./images/freshorigins.jpg" />
+      <div style="margin-left: 10px;margin-top: 100px;">
+        <ul>
+          <li><a href="./templates/abeliophyllum.html">Abeliophyllum</a></li>
+          <li><a href="./templates/Ageratum.html">Ageratum</a></li>
+        </ul>
+        <img
+          id="gif"
+          onclick="hideGif()"
+          style="margin-left: 70px;"
+          src="./images/animated-flower-image-0021.gif"
+        />
+        <div>
+          <a href="./templates/guestBook.html">Guest Book</a>
+        </div>
+      </div>
+    </div>
+    <script>
+      const hideGif = function() {
+        console.log(document.querySelector('#gif'));
+        const gif = document.querySelector('#gif');
+        gif.style.display = 'none';
+        setTimeout(() => {
+          gif.style.display = 'block';
+        }, 1000);
+      };
+    </script>
+  </body>
+</html>
