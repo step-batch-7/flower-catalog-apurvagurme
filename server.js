@@ -1,48 +1,64 @@
-const net = require('net');
-const { Server } = net;
 const fs = require('fs');
-const homePage = fs.readFileSync('./public/index.html', 'utf8');
-const DIR_PATH = `${__dirname}/public`;
-
-const getResponse = function(contentType, content) {
-  const defaultResponse = [
-    'HTTP/1.0 200 OK',
-    `Content-type: ${contentType}`,
-    `Content-Length: ${content.length}`,
-    '',
-    content
-  ].join('\n');
-  return defaultResponse;
+const { Server } = require('net');
+const Request = require('./lib/request');
+const Response = require('./lib/response');
+const STATIC_FOLDER = `${__dirname}/public`;
+const CONTENT_TYPES = {
+  txt: 'text/plain',
+  html: 'text/html',
+  css: 'text/css',
+  js: 'application/javascript',
+  json: 'application/json',
+  gif: 'image/gif',
+  jpg: 'image/jpeg'
 };
 
-const getRequest = function(text) {
-  const [request, ...headers] = text.split('\n');
-  const [method, url, protocol] = request.split(' ');
-  const req = { request, headers, method, url, protocol };
-  return req;
-};
-
-const generateResponse = function(req) {
-  let res = '';
-  if (req.method == 'GET' && req.url == '/') res = getResponse('html', homePage);
-  // if (req.method === 'GET') res = serveStaticFile(req);
+const serveHomePage = function(req) {
+  req.url = '/index.html';
+  const res = serveStaticPage(req);
   return res;
 };
 
-const handleRequest = function(socket) {
+const serveStaticPage = function(req) {
+  const path = `${STATIC_FOLDER}${req.url}`;
+  const status = fs.existsSync(path) && fs.statSync(path);
+  if (!status || !status.isFile) return new Response();
+  const content = fs.readFileSync(path);
+  const [, extension] = req.url.split('.');
+  const contentType = CONTENT_TYPES[extension];
+  const res = new Response();
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Length', content.length);
+  res.statusCode = 200;
+  res.body = content;
+  return res;
+};
+
+const findHandler = function(req) {
+  if (req.method === 'GET' && req.url === '/') return serveHomePage;
+  if (req.method === 'GET') return serveStaticPage;
+  return () => new Response();
+};
+
+const handleConnection = function(socket) {
   socket.setEncoding('utf8');
-  socket.on('data', data => {
-    const req = getRequest(data);
-    const res = generateResponse(req);
-    socket.write(res);
+  socket.on('close', () => console.warn(`${socket.remote} closed `));
+  socket.on('end', () => console.warn(`${socket.remote} ended`));
+  socket.on('err', err => console.error(err));
+  socket.on('data', text => {
+    const req = Request.parse(text);
+    const handler = findHandler(req);
+    const res = handler(req);
+    console.log(res);
+    res.writeTo(socket);
   });
 };
 
 const main = function() {
   const server = new Server();
   server.on('listening', () => console.log('listening'));
-  server.on('error', err => console.log(err));
-  server.on('connection', handleRequest);
+  server.on('error', err => console.error(err));
+  server.on('connection', handleConnection);
   server.listen(8000);
 };
 
