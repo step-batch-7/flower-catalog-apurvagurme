@@ -13,11 +13,12 @@
       <h3>Leave a comment</h3>
     </div>
     <div>
-      <form id="form">
+      <form id="form" action="addComment" method="POST">
         <span>Name: <input type="text" name="name"/></span><br />
       </form>
-      <span>Comment: <textarea rows="3" cols="20" name="comment"></textarea></span><br />
-      <input type="submit" value="Submit" />
+      <span>Comment: <textarea rows="3" cols="20" name="comment" form="form"></textarea></span
+      ><br />
+      <input type="submit" value="Submit" form="form" />
       <hr />
       <th>
         <tr>
