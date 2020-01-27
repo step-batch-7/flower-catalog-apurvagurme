@@ -1,7 +1,7 @@
 const hideGif = function() {
   const gif = document.querySelector('#gif');
-  gif.style.display = 'none';
+  gif.style.visibility = 'hidden';
   setTimeout(() => {
-    gif.style.display = 'block';
+    gif.style.visibility = '';
   }, 1000);
 };

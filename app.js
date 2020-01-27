@@ -19,25 +19,12 @@ const serveHomePage = function(req) {
 };
 
 const serveStaticPage = function(req) {
-  const path = `${STATIC_FOLDER}${req.url}`;
+  req.url === '/guestBook.html'
+    ? (path = `${TEMPLATE_FOLDER}${req.url}`)
+    : (path = `${STATIC_FOLDER}${req.url}`);
   const status = fs.existsSync(path) && fs.statSync(path);
   if (!status || !status.isFile) return new Response();
   const content = fs.readFileSync(path);
-  const [, extension] = req.url.split('.');
-  const contentType = CONTENT_TYPES[extension];
-  const res = new Response();
-  res.setHeader('Content-Type', contentType);
-  res.setHeader('Content-Length', content.length);
-  res.statusCode = 200;
-  res.body = content;
-  return res;
-};
-
-const serveGuestBook = function(req) {
-  const path = `${TEMPLATE_FOLDER}${req.url}`;
-  const status = fs.existsSync(path) && fs.statSync(path);
-  if (!status || !status.isFile) return new Response();
-  let content = fs.readFileSync(path);
   const [, extension] = req.url.split('.');
   const contentType = CONTENT_TYPES[extension];
   const res = new Response();
@@ -55,7 +42,7 @@ const storeRecord = function(keyAndValue, records) {
   fs.writeFileSync('./commentRecords.json', content);
 };
 
-const reducer = function(container, record) {
+const createRows = function(container, record) {
   const row = `<tr>
     <td>${new Date().toLocaleString()}</td>
     <td>${record.name}</td>
@@ -65,7 +52,7 @@ const reducer = function(container, record) {
 };
 
 const createTable = function(records) {
-  const table = records.reduce(reducer, '');
+  const table = records.reduce(createRows, '');
   return table;
 };
 
@@ -87,7 +74,6 @@ const saveComment = function(req) {
 
 const findHandler = function(req) {
   if (req.method === 'GET' && req.url === '/') return serveHomePage;
-  if (req.method === 'GET' && req.url === '/guestBook.html') return serveGuestBook;
   if (req.method === 'GET') return serveStaticPage;
   if (req.method === 'POST' && req.url === '/addComment') return saveComment;
   return () => new Response();
