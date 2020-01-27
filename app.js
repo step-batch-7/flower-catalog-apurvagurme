@@ -13,7 +13,7 @@ const storeRecord = function(keyAndValue, records) {
 
 const createRows = function(container, record) {
   const row = `<tr>
-    <td>${new Date().toLocaleString()}</td>
+    <td>${new Date().toGMTString()}</td>
     <td>${record.name}</td>
     <td>${record.comment}</td>
     </tr>`;
@@ -21,6 +21,7 @@ const createRows = function(container, record) {
 };
 
 const createTable = function(records) {
+  console.log(typeof records);
   const table = records.reduce(createRows, '');
   return table;
 };
@@ -48,15 +49,26 @@ const saveComment = function(req) {
 };
 
 const serveStaticPage = function(req) {
-  req.url === '/guestBook.html'
-    ? (path = `${TEMPLATE_FOLDER}${req.url}`)
-    : (path = `${STATIC_FOLDER}${req.url}`);
+  const path = `${STATIC_FOLDER}${req.url}`;
   const status = fs.existsSync(path) && fs.statSync(path);
   if (!status || !status.isFile) return new Response();
   let content = fs.readFileSync(path);
   const [, extension] = req.url.split('.');
   const contentType = CONTENT_TYPES[extension];
   const res = getResponse({ contentType, body: content });
+  return res;
+};
+
+const serveGuestPage = function(req) {
+  const path = `${TEMPLATE_FOLDER}${req.url}`;
+  let records = fs.readFileSync('./commentRecords.json', 'utf8');
+  records = JSON.parse(records);
+  records = createTable(records);
+  let content = fs.readFileSync(path, 'utf8');
+  const [, extension] = req.url.split('.');
+  const contentType = CONTENT_TYPES[extension];
+  const replaced = content.replace('__COMMENT-LIST__', records);
+  const res = getResponse({ contentType, body: replaced });
   return res;
 };
 
@@ -68,7 +80,7 @@ const serveHomePage = function(req) {
 
 const findHandler = function(req) {
   if (req.method === 'GET' && req.url === '/') return serveHomePage;
-  if (req.method === 'GET' && req.url === '/guestBook.html') return serveStaticPage;
+  if (req.method === 'GET' && req.url === '/guestBook.html') return serveGuestPage;
   if (req.method === 'GET') return serveStaticPage;
   if (req.method === 'POST' && req.url === '/addComment') return saveComment;
   return () => new Response();

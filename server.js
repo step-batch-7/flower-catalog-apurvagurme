@@ -17,7 +17,7 @@ const handleConnection = function(socket) {
 
 const main = function() {
   const server = new Server();
-  server.on('listening', () => console.log('listening'));
+  server.on('listening', () => console.warn('listening'));
   server.on('error', err => console.error(err));
   server.on('connection', handleConnection);
   server.listen(8000);
