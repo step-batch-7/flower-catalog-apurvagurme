@@ -1,7 +1,5 @@
-'strict mode';
 const STATIC_FOLDER = `${__dirname}/public`;
 const TEMPLATE_FOLDER = `${__dirname}/templates`;
-const Response = require('./lib/response');
 const CONTENT_TYPES = require('./lib/contentType');
 const fs = require('fs');
 
@@ -29,40 +27,62 @@ const createTable = function(records) {
   return table;
 };
 
-const getResponse = function({ contentType, body }) {
-  const res = new Response();
-  res.setHeader('Content-Type', contentType);
-  res.setHeader('Content-Length', body.length);
-  res.statusCode = 200;
-  res.body = body;
-  return res;
+const pickupParams = function(query, keyValuePair) {
+  const [key, value] = keyValuePair.split('=');
+  query[key] = value;
+  return query;
 };
 
-const saveComment = function(req) {
-  let records = fs.readFileSync('./commentRecords.json', 'utf8');
-  storeRecord(req.body, records);
-  records = fs.readFileSync('./commentRecords.json', 'utf8');
-  const path = `${TEMPLATE_FOLDER}/guestBook.html`;
-  const content = fs.readFileSync(path, 'utf8');
-  const table = createTable(JSON.parse(records));
-  const replaced = content.replace('__COMMENT-LIST__', table);
-  const contentType = 'text/html';
-  const res = getResponse({ contentType, body: replaced });
-  return res;
+const readParams = keyValueTextPair => keyValueTextPair.split('&').reduce(pickupParams, {});
+
+const collectBody = function(body) {
+  let { name, comment } = readParams(body);
+  name = decodeURIComponent(name);
+  comment = decodeURIComponent(comment);
+  name = name.replace(/\+/g, ' ');
+  comment = comment.replace(/\+/g, ' ');
+  body = { name, comment };
+  return body;
 };
 
-const serveStaticPage = function(req) {
+const redirectTo = (url, res) => {
+  res.setHeader('Location', url);
+  res.setHeader('Content-Length', 0);
+  res.statusCode = 301;
+  res.end();
+};
+
+const saveCommentAndRedirect = function(req, res) {
+  let data = '';
+  req.on('data', chunk => (data += chunk));
+  req.on('end', () => {
+    data = collectBody(data);
+    let records = fs.readFileSync('./commentRecords.json', 'utf8');
+    storeRecord(data, records);
+    records = fs.readFileSync('./commentRecords.json', 'utf8');
+    const path = `${TEMPLATE_FOLDER}/guestBook.html`;
+    const content = fs.readFileSync(path, 'utf8');
+    const table = createTable(JSON.parse(records));
+    const replaced = content.replace('__COMMENT-LIST__', table);
+    const contentType = 'text/html';
+    res.setHeader('contentType', contentType);
+    redirectTo('/guestBook.html', res);
+    res.end(replaced);
+  });
+};
+
+const serveStaticPage = function(req, res) {
   const path = `${STATIC_FOLDER}${req.url}`;
   const status = fs.existsSync(path) && fs.statSync(path);
-  if (!status || !status.isFile) return new Response();
+  if (!status || !status.isFile()) return new Response();
   const content = fs.readFileSync(path);
   const [, extension] = req.url.split('.');
   const contentType = CONTENT_TYPES[extension];
-  const res = getResponse({ contentType, body: content });
-  return res;
+  res.setHeader('contentType', contentType);
+  res.end(content);
 };
 
-const serveGuestPage = function(req) {
+const serveGuestPage = function(req, res) {
   const path = `${TEMPLATE_FOLDER}${req.url}`;
   let records = fs.readFileSync('./commentRecords.json', 'utf8');
   records = JSON.parse(records);
@@ -71,20 +91,20 @@ const serveGuestPage = function(req) {
   const [, extension] = req.url.split('.');
   const contentType = CONTENT_TYPES[extension];
   const replaced = content.replace('__COMMENT-LIST__', html);
-  const res = getResponse({ contentType, body: replaced });
-  return res;
+  res.setHeader('contentType', contentType);
+  res.end(replaced);
+  return;
 };
 
-const serveHomePage = function(req) {
+const serveHomePage = function(req, res) {
   req.url = '/index.html';
-  const res = serveStaticPage(req);
-  return res;
+  serveStaticPage(req, res);
 };
 
 const findHandler = function(req) {
   if (req.method === 'GET' && req.url === '/') return serveHomePage;
   if (req.method === 'GET' && req.url === '/guestBook.html') return serveGuestPage;
-  if (req.method === 'POST' && req.url === '/addComment') return saveComment;
+  if (req.method === 'POST' && req.url === '/addComment') return saveCommentAndRedirect;
   if (req.method === 'GET') return serveStaticPage;
   return () => new Response();
 };
