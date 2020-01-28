@@ -71,13 +71,17 @@ const saveCommentAndRedirect = function(req, res) {
   });
 };
 
+const getContentType = function(url) {
+  const [, extension] = url.split('.');
+  return CONTENT_TYPES[extension];
+};
+
 const serveStaticPage = function(req, res) {
   const path = `${STATIC_FOLDER}${req.url}`;
   const status = fs.existsSync(path) && fs.statSync(path);
   if (!status || !status.isFile()) return new Response();
   const content = fs.readFileSync(path);
-  const [, extension] = req.url.split('.');
-  const contentType = CONTENT_TYPES[extension];
+  const contentType = getContentType(req.url);
   res.setHeader('contentType', contentType);
   res.end(content);
 };
@@ -88,8 +92,7 @@ const serveGuestPage = function(req, res) {
   records = JSON.parse(records);
   const html = createTable(records);
   const content = fs.readFileSync(path, 'utf8');
-  const [, extension] = req.url.split('.');
-  const contentType = CONTENT_TYPES[extension];
+  const contentType = getContentType(req.url);
   const replaced = content.replace('__COMMENT-LIST__', html);
   res.setHeader('contentType', contentType);
   res.end(replaced);
