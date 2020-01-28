@@ -1,11 +1,27 @@
-#headTitle {
+.title {
   color: orange;
-  text-align: right;
   margin-right: 80px;
 }
 
-#flowerTitle {
-  color: orange;
+.index {
+  text-align: right;
+}
+
+.flower {
   text-align: center;
-  margin-right: 80px;
+}
+
+.image {
+  width: auto;
+  height: 500px;
+}
+
+.para {
+  margin-top: 200px;
+}
+
+.submitButton {
+  background-color: lightgray;
+  border: solid thin black;
+  border-radius: 2px;
 }
