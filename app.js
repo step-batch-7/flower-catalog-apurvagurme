@@ -45,13 +45,6 @@ const collectBody = function(body) {
   return body;
 };
 
-const redirectTo = (url, res) => {
-  res.setHeader('Location', url);
-  res.setHeader('Content-Length', 0);
-  res.statusCode = 301;
-  res.end();
-};
-
 const saveCommentAndRedirect = function(req, res) {
   let data = '';
   req.on('data', chunk => (data += chunk));
@@ -59,15 +52,8 @@ const saveCommentAndRedirect = function(req, res) {
     data = collectBody(data);
     let records = readFileSync('./commentRecords.json', 'utf8');
     storeRecord(data, records);
-    records = readFileSync('./commentRecords.json', 'utf8');
-    const path = `${TEMPLATE_FOLDER}/guestBook.html`;
-    const content = readFileSync(path, 'utf8');
-    const table = createTable(JSON.parse(records));
-    const replaced = content.replace('__COMMENT-LIST__', table);
-    const contentType = 'text/html';
-    res.setHeader('contentType', contentType);
-    redirectTo('/guestBook.html', res);
-    res.end(replaced);
+    res.writeHead(301, { contentType: 'text/html', Location: '/guestBook.html' });
+    res.end();
   });
 };
 
