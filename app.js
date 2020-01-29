@@ -1,7 +1,7 @@
 const STATIC_FOLDER = `${__dirname}/public`;
 const TEMPLATE_FOLDER = `${__dirname}/templates`;
 const CONTENT_TYPES = require('./lib/contentType');
-const fs = require('fs');
+const { existsSync, readFileSync, statSync, writeFileSync } = require('fs');
 
 const storeRecord = function(keyAndValue, records) {
   const date = new Date().toJSON();
@@ -10,7 +10,7 @@ const storeRecord = function(keyAndValue, records) {
   const oldRecords = JSON.parse(records);
   oldRecords.unshift(newRecord);
   const content = JSON.stringify(oldRecords);
-  fs.writeFileSync('./commentRecords.json', content);
+  writeFileSync('./commentRecords.json', content);
 };
 
 const createRows = function(container, record) {
@@ -57,11 +57,11 @@ const saveCommentAndRedirect = function(req, res) {
   req.on('data', chunk => (data += chunk));
   req.on('end', () => {
     data = collectBody(data);
-    let records = fs.readFileSync('./commentRecords.json', 'utf8');
+    let records = readFileSync('./commentRecords.json', 'utf8');
     storeRecord(data, records);
-    records = fs.readFileSync('./commentRecords.json', 'utf8');
+    records = readFileSync('./commentRecords.json', 'utf8');
     const path = `${TEMPLATE_FOLDER}/guestBook.html`;
-    const content = fs.readFileSync(path, 'utf8');
+    const content = readFileSync(path, 'utf8');
     const table = createTable(JSON.parse(records));
     const replaced = content.replace('__COMMENT-LIST__', table);
     const contentType = 'text/html';
@@ -78,9 +78,9 @@ const getContentType = function(url) {
 
 const serveStaticPage = function(req, res) {
   const path = `${STATIC_FOLDER}${req.url}`;
-  const status = fs.existsSync(path) && fs.statSync(path);
-  if (!status || !status.isFile()) return new Response();
-  const content = fs.readFileSync(path);
+  const status = existsSync(path) && statSync(path);
+  if (!status || !status.isFile()) return notFound(req, res);
+  const content = readFileSync(path);
   const contentType = getContentType(req.url);
   res.setHeader('contentType', contentType);
   res.end(content);
@@ -88,10 +88,10 @@ const serveStaticPage = function(req, res) {
 
 const serveGuestPage = function(req, res) {
   const path = `${TEMPLATE_FOLDER}${req.url}`;
-  let records = fs.readFileSync('./commentRecords.json', 'utf8');
+  let records = readFileSync('./commentRecords.json', 'utf8');
   records = JSON.parse(records);
   const html = createTable(records);
-  const content = fs.readFileSync(path, 'utf8');
+  const content = readFileSync(path, 'utf8');
   const contentType = getContentType(req.url);
   const replaced = content.replace('__COMMENT-LIST__', html);
   res.setHeader('contentType', contentType);
@@ -104,12 +104,17 @@ const serveHomePage = function(req, res) {
   serveStaticPage(req, res);
 };
 
+const notFound = function(req, res) {
+  res.writeHead(404);
+  res.end('Not Found');
+};
+
 const findHandler = function(req) {
   if (req.method === 'GET' && req.url === '/') return serveHomePage;
   if (req.method === 'GET' && req.url === '/guestBook.html') return serveGuestPage;
   if (req.method === 'POST' && req.url === '/addComment') return saveCommentAndRedirect;
   if (req.method === 'GET') return serveStaticPage;
-  return () => new Response();
+  return () => notFound;
 };
 
 exports.findHandler = findHandler;
