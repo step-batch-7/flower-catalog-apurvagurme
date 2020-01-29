@@ -1,11 +1,12 @@
 const STATIC_FOLDER = `${__dirname}/public`;
 const TEMPLATE_FOLDER = `${__dirname}/templates`;
 const CONTENT_TYPES = require('./lib/contentType');
+const querystring = require('querystring');
 const { existsSync, readFileSync, statSync, writeFileSync } = require('fs');
 
 const storeRecord = function(keyAndValue, records) {
+  let { name, comment } = querystring.parse(keyAndValue);
   const date = new Date().toJSON();
-  const { name, comment } = keyAndValue;
   const newRecord = { date, name, comment };
   const oldRecords = JSON.parse(records);
   oldRecords.unshift(newRecord);
@@ -27,29 +28,10 @@ const createTable = function(records) {
   return table;
 };
 
-const pickupParams = function(query, keyValuePair) {
-  const [key, value] = keyValuePair.split('=');
-  query[key] = value;
-  return query;
-};
-
-const readParams = keyValueTextPair => keyValueTextPair.split('&').reduce(pickupParams, {});
-
-const collectBody = function(body) {
-  let { name, comment } = readParams(body);
-  name = decodeURIComponent(name);
-  comment = decodeURIComponent(comment);
-  name = name.replace(/\+/g, ' ');
-  comment = comment.replace(/\+/g, ' ');
-  body = { name, comment };
-  return body;
-};
-
 const saveCommentAndRedirect = function(req, res) {
   let data = '';
   req.on('data', chunk => (data += chunk));
   req.on('end', () => {
-    data = collectBody(data);
     let records = readFileSync('./commentRecords.json', 'utf8');
     storeRecord(data, records);
     res.writeHead(301, { contentType: 'text/html', Location: '/guestBook.html' });
