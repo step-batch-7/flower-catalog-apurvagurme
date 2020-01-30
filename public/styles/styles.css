@@ -25,3 +25,13 @@
   border: solid thin black;
   border-radius: 2px;
 }
+
+table,
+th,
+td {
+  background-color: #eee;
+  border-collapse: collapse;
+  border: 5px solid white;
+  padding: 5px 20px;
+  line-height: 1.6em;
+}

@@ -11,13 +11,13 @@ const storeRecord = function(keyAndValue, records) {
   const newRecord = { date, name, comment };
   const oldRecords = JSON.parse(records);
   oldRecords.unshift(newRecord);
-  const content = JSON.stringify(oldRecords);
+  const content = JSON.stringify(oldRecords, null, 2);
   writeFileSync('./commentRecords.json', content);
 };
 
 const createRows = function(container, record) {
   const row = `<tr>
-    <td>${record.date}</td>
+    <td>${new Date(record.date).toLocaleString()}</td>
     <td>${record.name}</td>
     <td>${record.comment}</td>
     </tr>`;
