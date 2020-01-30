@@ -3,3 +3,5 @@ const { app } = require('./lib/handlers');
 
 const server = new Server(app.serve.bind(app));
 server.listen(8000);
+
+module.exports = { server };
