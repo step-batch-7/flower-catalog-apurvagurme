@@ -50,9 +50,14 @@ const getContentType = function(url) {
   return CONTENT_TYPES[extension];
 };
 
+const getStatus = path => existsSync(path) && statSync(path);
+
 const serveStaticPage = function(req, res, next) {
+  if (req.url === '/') {
+    req.url = '/index.html';
+  }
   const path = `${STATIC_FOLDER}${req.url}`;
-  const status = existsSync(path) && statSync(path);
+  const status = getStatus(path);
   if (!status || !status.isFile()) {
     return next();
   }
@@ -72,11 +77,6 @@ const serveGuestPage = function(req, res) {
   res.end(replaced);
 };
 
-const serveHomePage = function(req, res) {
-  req.url = '/index.html';
-  serveStaticPage(req, res);
-};
-
 const notFound = function(req, res) {
   res.writeHead(404);
   res.end('Not Found');
@@ -88,7 +88,6 @@ app.use(readBody);
 
 app.get('/guestBook.html', serveGuestPage);
 app.get('', serveStaticPage);
-app.get('/', serveHomePage);
 app.get('', notFound);
 
 app.post('/guestBook.html', saveCommentAndRedirect);
