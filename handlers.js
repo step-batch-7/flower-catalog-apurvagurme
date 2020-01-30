@@ -6,7 +6,7 @@ const { existsSync, readFileSync, statSync, writeFileSync } = require('fs');
 const { App } = require('./app.js');
 
 const storeRecord = function(keyAndValue, records) {
-  let { name, comment } = querystring.parse(keyAndValue);
+  const { name, comment } = querystring.parse(keyAndValue);
   const date = new Date().toJSON();
   const newRecord = { date, name, comment };
   const oldRecords = JSON.parse(records);
@@ -31,7 +31,9 @@ const createTable = function(records) {
 
 const readBody = function(req, res, next) {
   let data = '';
-  req.on('data', chunk => (data += chunk));
+  req.on('data', chunk => {
+    data += chunk;
+  });
   req.on('end', () => {
     req.body = data;
     next();
@@ -39,7 +41,7 @@ const readBody = function(req, res, next) {
 };
 
 const saveCommentAndRedirect = function(req, res) {
-  let records = readFileSync('./commentRecords.json', 'utf8');
+  const records = readFileSync('./commentRecords.json', 'utf8');
   storeRecord(req.body, records);
   res.writeHead(303, { location: '/guestBook.html' });
   res.end();
@@ -53,7 +55,9 @@ const getContentType = function(url) {
 const serveStaticPage = function(req, res, next) {
   const path = `${STATIC_FOLDER}${req.url}`;
   const status = existsSync(path) && statSync(path);
-  if (!status || !status.isFile()) return next();
+  if (!status || !status.isFile()) {
+    return next();
+  }
   const content = readFileSync(path);
   const contentType = getContentType(req.url);
   res.setHeader('contentType', contentType);
@@ -70,7 +74,6 @@ const serveGuestPage = function(req, res) {
   const replaced = content.replace('__COMMENT-LIST__', html);
   res.setHeader('contentType', contentType);
   res.end(replaced);
-  return;
 };
 
 const serveHomePage = function(req, res) {
