@@ -61,14 +61,3 @@ describe('GET', function() {
     });
   });
 });
-
-describe('POST', function() {
-  describe('URL: /guestBook.html', function() {
-    it('description of test', function(done) {
-      request(app.serve.bind(app))
-        .post('/guestBook.html')
-        .send({ name: 'rashmi', date: new Date(), comment: 'hello' })
-        .expect(303, done);
-    });
-  });
-});
