@@ -1,5 +1,7 @@
 const request = require('supertest');
 const { app } = require('../lib/handlers');
+const sinon = require('sinon');
+const fs = require('fs');
 
 describe('GET', function() {
   describe('URL: /', function() {
@@ -58,6 +60,22 @@ describe('GET', function() {
         .expect('Content-Type', 'text/html')
         .expect('Content-Length', '1299')
         .expect(200, done);
+    });
+  });
+});
+
+describe('POST', function() {
+  describe('URL: /guestBook.html', function() {
+    const fake = () => {};
+
+    before(() => sinon.replace(fs, 'writeFileSync', fake));
+    after(() => sinon.restore());
+
+    it('should give status code 200', function(done) {
+      request(app.serve.bind(app))
+        .post('/guestBook.html')
+        .send('hello everyone')
+        .expect(303, done);
     });
   });
 });
