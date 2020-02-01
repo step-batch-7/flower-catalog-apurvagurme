@@ -66,9 +66,7 @@ describe('GET', function() {
 
 describe('POST', function() {
   describe('URL: /guestBook.html', function() {
-    const fake = () => {};
-
-    before(() => sinon.replace(fs, 'writeFileSync', fake));
+    before(() => sinon.replace(fs, 'writeFileSync', sinon.fake()));
     after(() => sinon.restore());
 
     it('should give status code 200', function(done) {
