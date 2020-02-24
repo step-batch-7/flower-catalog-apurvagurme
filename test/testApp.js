@@ -68,7 +68,6 @@ describe('POST', function() {
   describe('URL: /guestBook.html', function() {
     before(() => sinon.replace(fs, 'writeFileSync', sinon.fake()));
     after(() => sinon.restore());
-
     it('should give status code 200', function(done) {
       request(app.serve.bind(app))
         .post('/guestBook.html')
